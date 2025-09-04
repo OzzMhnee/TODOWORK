@@ -1,0 +1,28 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded shadow">
+    <h1 class="text-2xl font-bold mb-6 text-yellow-600">Labels</h1>
+    <a href="{{ path('app_label_new') }}" class="mb-4 inline-block bg-yellow-600 text-white px-4 py-2 rounded hover:bg-yellow-700">Nouveau label</a>
+    <ul>
+        {% for label in labels %}
+            <li class="mb-2 p-4 border rounded flex justify-between items-center">
+                <span>
+                    <span class="inline-block w-4 h-4 rounded-full mr-2" style="background: {{ label.color }}"></span>
+                    <strong>{{ label.name }}</strong>
+                </span>
+                <span>
+                    <a href="{{ path('app_label_show', {'id': label.id}) }}" class="text-blue-600 hover:underline mr-2">Voir</a>
+                    <a href="{{ path('app_label_edit', {'id': label.id}) }}" class="text-green-600 hover:underline mr-2">Modifier</a>
+                    <form method="post" action="{{ path('app_label_delete', {'id': label.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce label ?');">
+                        <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ label.id) }}">
+                        <button class="text-red-600 hover:underline bg-transparent border-0 p-0" type="submit">Supprimer</button>
+                    </form>
+                </span>
+            </li>
+        {% else %}
+            <li>Aucun label pour le moment.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

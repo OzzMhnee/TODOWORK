@@ -1,0 +1,10 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="max-w-lg mx-auto mt-10 bg-white p-8 rounded shadow">
+    <h1 class="text-2xl font-bold mb-6 text-yellow-600">{{ label.name }}</h1>
+    <p class="mb-4"><strong>Couleur :</strong> <span class="inline-block w-6 h-6 rounded-full align-middle" style="background: {{ label.color }}"></span> {{ label.color }}</p>
+    <a href="{{ path('app_label_edit', {'id': label.id}) }}" class="text-green-600 hover:underline mr-4">Modifier</a>
+    <a href="{{ path('app_label') }}" class="text-yellow-600 hover:underline">Retour à la liste</a>
+</div>
+{% endblock %}

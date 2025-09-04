@@ -1,0 +1,179 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="max-w-3xl mx-auto mt-10 space-y-8">
+    {# --- Zone 1 : Informations de la carte --- #}
+    <div class="bg-white p-8 rounded shadow">
+        <h1 class="text-2xl font-bold mb-6 text-purple-600">{{ card.title }}</h1>
+        <p class="mb-2"><strong>Description :</strong> {{ card.description }}</p>
+        <p class="mb-2"><strong>Position :</strong> {{ card.position }}</p>
+        <p class="mb-2"><strong>Liste :</strong> {{ card.liste ? card.liste.name : 'Aucune' }}</p>
+        <p class="mb-2"><strong>Échéance :</strong> {{ card.dueAt ? card.dueAt|date('d/m/Y H:i') : 'Aucune' }}</p>
+        <p class="mb-2"><strong>Créée par :</strong> {{ card.createdBy ? card.createdBy.firstName ~ ' ' ~ card.createdBy.lastName : 'N/A' }}</p>
+        <p class="mb-2"><strong>Archivée le :</strong> {{ card.archivedAt ? card.archivedAt|date('d/m/Y H:i') : 'Non archivée' }}</p>
+        <a href="{{ path('app_card_edit', {'id': card.id}) }}" class="text-green-600 hover:underline mr-4">Modifier</a>
+        <a href="{{ path('app_card') }}" class="text-purple-600 hover:underline">Retour à la liste</a>
+        <hr class="my-4">
+        <h3 class="font-bold mt-4 mb-2">Ajouter une checklist</h3>
+        {{ form_start(checklistForm) }}
+            <div class="mb-2">
+                {{ form_widget(checklistForm.title, {'attr': {'class': 'w-full px-3 py-2 border rounded'}}) }}
+                {{ form_errors(checklistForm.title) }}
+            </div>
+            <button class="bg-purple-600 text-white px-4 py-2 rounded" type="submit">Ajouter la checklist</button>
+        {{ form_end(checklistForm) }}
+    </div>
+</div>
+<div class="max-w-3xl mx-auto mt-10 space-y-8">
+    {# --- Zone 2 : Commentaires --- #}
+    <div class="bg-white p-8 rounded shadow">
+        <h2 class="text-lg font-bold mb-4">Commentaires</h2>
+        <ul class="mb-4">
+            {% for comment in card.comments %}
+                <li class="mb-2 border-b pb-2">
+                    <span class="font-semibold">{{ comment.author ? comment.author.firstName ~ ' ' ~ comment.author.lastName : 'Utilisateur supprimé' }}</span>
+                    <span class="text-xs text-gray-400">({{ comment.createdAt ? comment.createdAt|date('d/m/Y H:i') : '' }})</span>
+                    <div>{{ comment.content }}</div>
+                </li>
+            {% else %}
+                <li class="text-gray-400">Aucun commentaire</li>
+            {% endfor %}
+        </ul>
+        <h3 class="font-bold mt-4 mb-2">Ajouter un commentaire</h3>
+        {{ form_start(commentForm) }}
+            <div class="mb-2">
+                {{ form_widget(commentForm.content, {'attr': {'class': 'w-full px-3 py-2 border rounded'}}) }}
+                {{ form_errors(commentForm.content) }}
+            </div>
+            <button class="bg-blue-600 text-white px-4 py-2 rounded" type="submit">Ajouter un commentaire</button>
+        {{ form_end(commentForm) }}
+    </div>
+</div>
+<div class="max-w-3xl mx-auto mt-10 space-y-8">
+    {# --- Zone 3 : Checklists (une zone par checklist) --- #}
+    <ul id="checklists-sortable" class="space-y-6" data-card-id="{{ card.id }}">
+        {% for checklist in card.checklists|sort((a, b) => a.position <=> b.position) %}
+            <li class="bg-white p-6 rounded shadow" data-checklist-id="{{ checklist.id }}">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="font-semibold text-purple-700">{{ checklist.title }}</span>
+                    <span class="drag-handle-checklist flex items-center justify-center w-7 h-7 rounded bg-gray-100 border border-gray-300 shadow cursor-move ml-2" title="Déplacer la checklist">
+                        <svg class="w-4 h-4 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                            <circle cx="12" cy="12" r="10" />
+                            <path d="M8 12h8M12 8v8" />
+                        </svg>
+                    </span>
+                </div>
+                <ul class="ml-4 checklist-items-sortable" data-checklist-id="{{ checklist.id }}">
+                    {% for item in checklist.checklistItems|sort((a, b) => a.position <=> b.position) %}
+                        <li data-item-id="{{ item.id }}" class="flex items-center gap-2 cursor-move mb-1">
+                            <input type="checkbox"
+                                class="checklist-item-toggle"
+                                data-item-id="{{ item.id }}"
+                                {% if item.isDone %}checked{% endif %}>
+                            <span class="{% if item.isDone %}line-through text-gray-400{% endif %}">{{ item.content }}</span>
+                        </li>
+                    {% else %}
+                        <li class="text-gray-400">Aucun item</li>
+                    {% endfor %}
+                </ul>
+                <form method="post" action="{{ path('app_checklist_item_add', {'checklistId': checklist.id}) }}" class="flex gap-2 mt-2">
+                    <input type="text" name="content" placeholder="Nouvel item..." class="flex-1 px-2 py-1 border rounded" required>
+                    <button type="submit" class="bg-purple-500 text-white px-3 py-1 rounded">Ajouter</button>
+                </form>
+            </li>
+        {% else %}
+            <li class="bg-white p-6 rounded shadow text-gray-400">Aucune checklist</li>
+        {% endfor %}
+    </ul>
+</div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const el = document.getElementById('checklists-sortable');
+    if (el) {
+        new Sortable(el, {
+            animation: 150,
+            handle: '.drag-handle-checklist',
+            onEnd: function (evt) {
+                // Récupère l'ordre des IDs
+                const ids = Array.from(el.querySelectorAll('li[data-checklist-id]')).map(li => li.getAttribute('data-checklist-id'));
+                fetch('/checklist/reorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token("reorder_checklists") }}'
+                    },
+                    body: JSON.stringify({
+                        card_id: el.getAttribute('data-card-id'),
+                        checklist_ids: ids
+                    })
+                }).then(r => r.json()).then(data => {
+                    if (data.success) {
+                        // Optionnel : feedback utilisateur
+                    }
+                });
+            }
+        });
+    }
+});
+</script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('.checklist-items-sortable').forEach(function(ul) {
+        new Sortable(ul, {
+            animation: 150,
+            handle: '.cursor-move',
+            onEnd: function (evt) {
+                const ids = Array.from(ul.querySelectorAll('li[data-item-id]')).map(li => li.getAttribute('data-item-id'));
+                fetch('/checklist/item/reorder', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-Requested-With': 'XMLHttpRequest',
+                        'X-CSRF-TOKEN': '{{ csrf_token("reorder_checklist_items") }}'
+                    },
+                    body: JSON.stringify({
+                        checklist_id: ul.getAttribute('data-checklist-id'),
+                        item_ids: ids
+                    })
+                }).then(r => r.json()).then(data => {
+                    if (data.success) {
+                        // Optionnel : feedback utilisateur
+                    }
+                });
+            }
+        });
+    });
+});
+
+// Gestion du check/décheck des items
+document.querySelectorAll('.checklist-item-toggle').forEach(function(checkbox) {
+    checkbox.addEventListener('change', function() {
+        const itemId = this.getAttribute('data-item-id');
+        const isDone = this.checked;
+        fetch('/checklist/item/' + itemId + '/toggle', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-Requested-With': 'XMLHttpRequest',
+                'X-CSRF-TOKEN': '{{ csrf_token("toggle_checklist_item") }}'
+            },
+            body: JSON.stringify({ is_done: isDone })
+        }).then(r => r.json()).then(data => {
+            if (data.success) {
+                // Met à jour le style barré
+                const span = this.nextElementSibling;
+                if (isDone) {
+                    span.classList.add('line-through', 'text-gray-400');
+                } else {
+                    span.classList.remove('line-through', 'text-gray-400');
+                }
+            }
+        }.bind(this));
+    });
+});
+</script>
+{% endblock %}

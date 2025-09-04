@@ -1,0 +1,63 @@
+{% extends 'base.html.twig' %}
+
+{% block body %}
+<div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded shadow">
+    <h1 class="text-2xl font-bold mb-6 text-blue-600">Mes Workspaces</h1>
+    <a href="{{ path('app_workspace_new') }}" class="mb-4 inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Nouveau workspace</a>
+    <ul>
+        {% for workspace in workspaces %}
+            <li class="mb-2 p-4 border rounded">
+                <div class="flex justify-between items-center">
+                    <span class="font-bold text-blue-700">{{ workspace.name }}</span>
+                    <span>
+                        <a href="{{ path('app_workspace_show', {'id': workspace.id}) }}" class="text-blue-600 hover:underline mr-2">Voir</a>
+                        <a href="{{ path('app_workspace_edit', {'id': workspace.id}) }}" class="text-green-600 hover:underline mr-2">Modifier</a>
+                        <form method="post" action="{{ path('app_workspace_delete', {'id': workspace.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer ce workspace ?');">
+                            <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ workspace.id) }}">
+                            <button class="text-red-600 hover:underline bg-transparent border-0 p-0" type="submit">Supprimer</button>
+                        </form>
+                    </span>
+                </div>
+                <ul class="ml-4 mt-2">
+                    {% for project in workspace.projects %}
+                        <li>
+                            <span class="font-semibold text-green-700">Projet :</span> {{ project.name }}
+                            <ul class="ml-4">
+                                {% for board in project.boards %}
+                                    <li>
+                                        <span class="font-semibold text-blue-500">Board :</span> {{ board.name }}
+                                        <ul class="ml-4">
+                                            {% for liste in board.listes %}
+                                                <li>
+                                                    <span class="font-semibold text-purple-600">Liste :</span> {{ liste.name }}
+                                                    <ul class="ml-4">
+                                                        {% for card in liste.cards %}
+                                                            <li>
+                                                                <span class="font-semibold text-gray-700">Carte :</span> {{ card.title }}
+                                                            </li>
+                                                        {% else %}
+                                                            <li class="text-gray-400">Aucune carte</li>
+                                                        {% endfor %}
+                                                    </ul>
+                                                </li>
+                                            {% else %}
+                                                <li class="text-gray-400">Aucune liste</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </li>
+                                {% else %}
+                                    <li class="text-gray-400">Aucun board</li>
+                                {% endfor %}
+                            </ul>
+                        </li>
+                    {% else %}
+                        <li class="text-gray-400">Aucun projet</li>
+                    {% endfor %}
+                </ul>
+            </li>
+        {% else %}
+            <li>Aucun workspace pour le moment.</li>
+        {% endfor %}
+    </ul>
+</div>
+{% endblock %}

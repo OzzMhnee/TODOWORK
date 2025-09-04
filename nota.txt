@@ -1,0 +1,34 @@
+CREER NOUVEAU PROJET :
+symfony new NomProjet --version="7.3.x.dev" --webapp
+
+LANCER LE SERVER LOCAL
+symfony server:start
+symfony serve
+php -S localhost:8000 -t public
+
+BDD
+modifier dans .env
+Créer sa bdd après modification du env by console : php bin/console doctrine:database:create
+    -> si ça ne marche pas php bin/console cache:clear
+Créer une table avec : php bin/console make:entity
+php bin/console make:migration
+php bin/console doctrine:migrations:migrate
+        -> entity visible dans src > entity
+
+CREER FORMULAIRE
+php bin/console make:form
+        -> formulaire visible dans src > form
+
+VIDER LE CACHE DE symfony
+        symfony console cache:clear
+
+How to Implement a Registration Form
+        php bin/console make:user
+        php bin/console make:migration
+        php bin/console doctrine:migrations:migrate
+        php bin/console make:registration-form
+php bin/console make:security:form-login
+
+
+
+npx tailwindcss -i ./assets/styles/app.css -o ./public/build/app.css --watch
