@@ -146,7 +146,8 @@ final class ProjectController extends AbstractController
         // Cards placées sur le calendrier
         $calendarEvents = [];
         foreach ($cards as $card) {
-            if ($card->getScheduledAt() && !$card->getArchivedAt()) {
+            // Affiche uniquement les cards planifiées par l'utilisateur connecté
+            if ($card->getScheduledAt() && !$card->getArchivedAt() && $card->getScheduledBy() && $card->getScheduledBy()->getId() === $user->getId()) {
                 $color = $card->getListe() && $card->getListe()->getBoard() && $card->getListe()->getBoard()->getProject() && $card->getListe()->getBoard()->getProject()->getLabel()
                     ? $card->getListe()->getBoard()->getProject()->getLabel()->getColor()
                     : '#3b82f6';

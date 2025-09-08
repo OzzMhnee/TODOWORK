@@ -18,6 +18,8 @@
     <body>
         {% include 'layout/__navbar.html.twig' %}
         {% include 'layout/__flashMessages.html.twig' %}
+
         {% block body %}{% endblock %}
+        {% block custom_scripts %}{% endblock %}
     </body>
 </html>

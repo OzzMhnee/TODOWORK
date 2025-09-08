@@ -174,12 +174,16 @@ final class CardController extends AbstractController
     public function scheduleCard(Request $request, Card $card, EntityManagerInterface $em): Response
     {
         $data = json_decode($request->getContent(), true);
+        $user = $this->getUser();
+
         if (array_key_exists('scheduled_at', $data)) {
             $card->setScheduledAt(
                 $data['scheduled_at']
                     ? new \DateTimeImmutable($data['scheduled_at'], new \DateTimeZone('UTC'))
                     : null
             );
+            // Si on planifie, on associe l'utilisateur, sinon on retire l'association
+            $card->setScheduledBy($data['scheduled_at'] ? $user : null);
         }
         if (array_key_exists('scheduled_end_at', $data)) {
             $card->setScheduledEndAt(

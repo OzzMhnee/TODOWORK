@@ -11,6 +11,17 @@
         <p class="mb-2"><strong>Échéance :</strong> {{ card.dueAt ? card.dueAt|date('d/m/Y H:i') : 'Aucune' }}</p>
         <p class="mb-2"><strong>Créée par :</strong> {{ card.createdBy ? card.createdBy.firstName ~ ' ' ~ card.createdBy.lastName : 'N/A' }}</p>
         <p class="mb-2"><strong>Archivée le :</strong> {{ card.archivedAt ? card.archivedAt|date('d/m/Y H:i') : 'Non archivée' }}</p>
+        {% if card.scheduledAt and card.scheduledBy %}
+            <div class="mb-2 p-2 bg-blue-50 border border-blue-200 rounded">
+                <strong>Planifiée par :</strong>
+                {{ card.scheduledBy.firstName }} {{ card.scheduledBy.lastName }}
+                <br>
+                <strong>Début :</strong> {{ card.scheduledAt|date('d/m/Y H:i') }}
+                {% if card.scheduledEndAt %}
+                    <br><strong>Fin :</strong> {{ card.scheduledEndAt|date('d/m/Y H:i') }}
+                {% endif %}
+            </div>
+        {% endif %}
         <a href="{{ path('app_card_edit', {'id': card.id}) }}" class="text-green-600 hover:underline mr-4">Modifier</a>
         <a href="{{ path('app_card') }}" class="text-purple-600 hover:underline">Retour à la liste</a>
         <hr class="my-4">
@@ -63,14 +74,38 @@
                         </svg>
                     </span>
                 </div>
-                <ul class="ml-4 checklist-items-sortable" data-checklist-id="{{ checklist.id }}">
+
+                <ul class="ml-4" data-checklist-id="{{ checklist.id }}">
                     {% for item in checklist.checklistItems|sort((a, b) => a.position <=> b.position) %}
-                        <li data-item-id="{{ item.id }}" class="flex items-center gap-2 cursor-move mb-1">
-                            <input type="checkbox"
-                                class="checklist-item-toggle"
-                                data-item-id="{{ item.id }}"
-                                {% if item.isDone %}checked{% endif %}>
+                        <script>
+                            console.log(
+                                "ChecklistItem id={{ item.id }} | isDone={{ item.isDone ? 'true' : 'false' }} | getIsDone={{ item.getIsDone ? 'true' : 'false' }}"
+                            );
+                        </script>
+                        <li data-item-id="{{ item.id }}" class="flex items-center gap-2 mb-1">
+                            <form method="post" action="{{ path('app_checklist_item_toggle', {'id': item.id}) }}" style="display:inline;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('toggle_checklist_item_' ~ item.id) }}">
+                                <input type="hidden" name="is_done" value="{{ item.isDone ? 0 : 1 }}">
+                                <button type="submit" style="background:none;border:none;padding:0;margin:0;">
+                                    <input type="checkbox" {% if item.isDone %}checked{% endif %} onclick="this.form.is_done.value = this.checked ? 1 : 0; this.form.submit(); return false;">
+                                </button>
+                            </form>
                             <span class="{% if item.isDone %}line-through text-gray-400{% endif %}">{{ item.content }}</span>
+                            <form method="post" action="{{ path('app_checklist_item_reorder', {'checklistId': checklist.id}) }}" style="display:inline; margin-left: 0.5rem;">
+                                <input type="hidden" name="_token" value="{{ csrf_token('reorder_checklist_items_' ~ checklist.id) }}">
+                                <input type="hidden" name="item_id" value="{{ item.id }}">
+                                <input type="hidden" name="direction" value="">
+                                <button type="submit" title="Monter l'item" style="background:none;border:none;padding:0;margin:0;vertical-align:middle;" onclick="event.preventDefault(); this.form.direction.value='up'; this.form.submit();">
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M12 8l-6 6h12z"/>
+                                    </svg>
+                                </button>
+                                <button type="submit" title="Descendre l'item" style="background:none;border:none;padding:0;margin:0;vertical-align:middle;" onclick="event.preventDefault(); this.form.direction.value='down'; this.form.submit();">
+                                    <svg class="w-5 h-5 text-gray-500" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                                        <path d="M12 16l6-6H6z"/>
+                                    </svg>
+                                </button>
+                            </form>
                         </li>
                     {% else %}
                         <li class="text-gray-400">Aucun item</li>
@@ -89,91 +124,6 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    const el = document.getElementById('checklists-sortable');
-    if (el) {
-        new Sortable(el, {
-            animation: 150,
-            handle: '.drag-handle-checklist',
-            onEnd: function (evt) {
-                // Récupère l'ordre des IDs
-                const ids = Array.from(el.querySelectorAll('li[data-checklist-id]')).map(li => li.getAttribute('data-checklist-id'));
-                fetch('/checklist/reorder', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': '{{ csrf_token("reorder_checklists") }}'
-                    },
-                    body: JSON.stringify({
-                        card_id: el.getAttribute('data-card-id'),
-                        checklist_ids: ids
-                    })
-                }).then(r => r.json()).then(data => {
-                    if (data.success) {
-                        // Optionnel : feedback utilisateur
-                    }
-                });
-            }
-        });
-    }
-});
-</script>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    document.querySelectorAll('.checklist-items-sortable').forEach(function(ul) {
-        new Sortable(ul, {
-            animation: 150,
-            handle: '.cursor-move',
-            onEnd: function (evt) {
-                const ids = Array.from(ul.querySelectorAll('li[data-item-id]')).map(li => li.getAttribute('data-item-id'));
-                fetch('/checklist/item/reorder', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': '{{ csrf_token("reorder_checklist_items") }}'
-                    },
-                    body: JSON.stringify({
-                        checklist_id: ul.getAttribute('data-checklist-id'),
-                        item_ids: ids
-                    })
-                }).then(r => r.json()).then(data => {
-                    if (data.success) {
-                        // Optionnel : feedback utilisateur
-                    }
-                });
-            }
-        });
-    });
-});
-
-// Gestion du check/décheck des items
-document.querySelectorAll('.checklist-item-toggle').forEach(function(checkbox) {
-    checkbox.addEventListener('change', function() {
-        const itemId = this.getAttribute('data-item-id');
-        const isDone = this.checked;
-        fetch('/checklist/item/' + itemId + '/toggle', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-                'X-Requested-With': 'XMLHttpRequest',
-                'X-CSRF-TOKEN': '{{ csrf_token("toggle_checklist_item") }}'
-            },
-            body: JSON.stringify({ is_done: isDone })
-        }).then(r => r.json()).then(data => {
-            if (data.success) {
-                // Met à jour le style barré
-                const span = this.nextElementSibling;
-                if (isDone) {
-                    span.classList.add('line-through', 'text-gray-400');
-                } else {
-                    span.classList.remove('line-through', 'text-gray-400');
-                }
-            }
-        }.bind(this));
-    });
-});
-</script>
+{% block custom_scripts %}{% endblock %}
 {% endblock %}
+

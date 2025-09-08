@@ -65,6 +65,10 @@ class ChecklistItem
         $this->is_done = (bool)$is_done;
         return $this;
     }
+        public function getIsDone(): ?bool
+    {
+        return $this->is_done;
+    }
 
     public function getPosition(): ?int
     {

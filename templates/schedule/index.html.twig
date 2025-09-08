@@ -334,35 +334,14 @@ document.addEventListener('DOMContentLoaded', function() {
     });
     calendar.render();
 
-    // 3. Drag & drop Eisenhower (inchangé)
+    // 3. Clic sur une card du diagramme Eisenhower : redirige vers la page de la card
     document.querySelectorAll('.draggable').forEach(el => {
-        el.draggable = true;
-        el.addEventListener('dragstart', e => {
-            e.dataTransfer.setData('card-id', el.dataset.cardId);
-        });
-    });
-    document.querySelectorAll('#eisenhower > div').forEach(zone => {
-        zone.addEventListener('dragover', e => e.preventDefault());
-        zone.addEventListener('drop', function(e) {
-            e.preventDefault();
-            const cardId = e.dataTransfer.getData('card-id');
-            const cardEl = document.querySelector('.draggable[data-card-id="'+cardId+'"]');
-            if (cardEl) {
-                this.appendChild(cardEl);
-                // SAUVEGARDE AJAX
-                fetch('/card/' + cardId + '/schedule', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-Requested-With': 'XMLHttpRequest',
-                        'X-CSRF-TOKEN': '{{ csrf_token("schedule") }}'
-                    },
-                    body: JSON.stringify({
-                        eisenhower_quadrant: this.getAttribute('data-quadrant')
-                    })
-                }).then(r => r.json()).then(data => {
-                    // Optionnel : feedback utilisateur
-                });
+        el.removeAttribute('draggable');
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', function() {
+            const cardId = el.dataset.cardId;
+            if (cardId) {
+                window.location.href = '/card/' + cardId;
             }
         });
     });

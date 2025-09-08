@@ -7,6 +7,7 @@ use Symfony\Component\HttpFoundation\Response;
 use App\Entity\Checklist;
 use App\Entity\ChecklistItem;
 use App\Repository\ChecklistRepository;
+use App\Repository\ChecklistItemRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Component\HttpFoundation\Request;
 use Symfony\Component\HttpFoundation\RedirectResponse;
@@ -65,19 +66,57 @@ final class ChecklistItemController extends AbstractController
     public function toggle(
         int $id,
         Request $request,
-        \App\Repository\ChecklistItemRepository $itemRepo,
+        ChecklistItemRepository $itemRepo,
         EntityManagerInterface $em
-    ): \Symfony\Component\HttpFoundation\JsonResponse {
+    ): Response {
         $item = $itemRepo->find($id);
         if (!$item) {
-            return $this->json(['success' => false, 'error' => 'Item introuvable'], 404);
+            $this->addFlash('error', 'Item introuvable');
+            return $this->redirect($request->headers->get('referer') ?: '/');
         }
-        $data = json_decode($request->getContent(), true);
 
-        $isDone = filter_var($data['is_done'] ?? false, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
-        $item->setIsDone($isDone === true);
-
+        // Récupère la valeur depuis le POST classique
+        $isDone = $request->request->get('is_done', 0) ? true : false;
+        $item->setIsDone($isDone);
         $em->flush();
-        return $this->json(['success' => true]);
+
+        return $this->redirect($request->headers->get('referer') ?: '/');
+    }
+
+    #[Route('/checklist/{checklistId}/item/reorder', name: 'app_checklist_item_reorder', methods: ['POST'])]
+    public function reorderItem(
+        int $checklistId,
+        Request $request,
+        ChecklistRepository $checklistRepo,
+        ChecklistItemRepository $itemRepo,
+        EntityManagerInterface $em
+    ): RedirectResponse {
+        $checklist = $checklistRepo->find($checklistId);
+        $itemId = $request->request->get('item_id');
+        $direction = $request->request->get('direction');
+        if (!$checklist || !$itemId || !in_array($direction, ['up', 'down'])) {
+            return $this->redirect($request->headers->get('referer') ?: '/');
+        }
+        $items = $checklist->getChecklistItems()->toArray();
+        usort($items, fn($a, $b) => $a->getPosition() <=> $b->getPosition());
+        foreach ($items as $i => $item) {
+            if ($item->getId() == $itemId) {
+                if ($direction === 'up' && $i > 0) {
+                    $prev = $items[$i-1];
+                    $curPos = $item->getPosition();
+                    $item->setPosition($prev->getPosition());
+                    $prev->setPosition($curPos);
+                }
+                if ($direction === 'down' && $i < count($items)-1) {
+                    $next = $items[$i+1];
+                    $curPos = $item->getPosition();
+                    $item->setPosition($next->getPosition());
+                    $next->setPosition($curPos);
+                }
+                break;
+            }
+        }
+        $em->flush();
+        return $this->redirect($request->headers->get('referer') ?: '/');
     }
 }

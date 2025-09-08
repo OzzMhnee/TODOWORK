@@ -43,6 +43,9 @@ class Card
     #[ORM\Column(nullable: true)]
     private ?\DateTimeImmutable $scheduled_end_at = null;
 
+    #[ORM\ManyToOne(targetEntity: User::class)]
+    private ?User $scheduled_by = null;
+
     #[ORM\Column(length: 32, nullable: true)]
     private ?string $eisenhower_quadrant = null;
 
@@ -281,6 +284,17 @@ class Card
     public function setScheduledEndAt(?\DateTimeImmutable $scheduled_end_at): static
     {
         $this->scheduled_end_at = $scheduled_end_at;
+        return $this;
+    }
+
+    public function getScheduledBy(): ?User
+    {
+        return $this->scheduled_by;
+    }
+
+    public function setScheduledBy(?User $user): static
+    {
+        $this->scheduled_by = $user;
         return $this;
     }
 }
