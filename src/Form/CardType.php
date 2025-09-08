@@ -2,8 +2,9 @@
 
 namespace App\Form;
 
+use App\Entity\Board;
 use App\Entity\Card;
-use App\Entity\Liste;
+use App\Entity\Label;
 use App\Entity\User;
 use Symfony\Bridge\Doctrine\Form\Type\EntityType;
 use Symfony\Component\Form\AbstractType;
@@ -21,8 +22,16 @@ class CardType extends AbstractType
             ->add('due_at', null, [
                 'widget' => 'single_text',
             ])
-            ->add('liste', EntityType::class, [
-                'class' => Liste::class,
+            ->add('board', EntityType::class, [
+                'class' => Board::class,
+                'choice_label' => 'name',
+            ])
+            ->add('label', EntityType::class, [
+                'class' => Label::class,
+                'choice_label' => 'name',
+            ])
+            ->add('board', EntityType::class, [
+                'class' => Board::class,
                 'choice_label' => 'name',
             ])
         ;

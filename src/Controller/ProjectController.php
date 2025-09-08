@@ -3,6 +3,7 @@
 namespace App\Controller;
 
 use App\Entity\Project;
+use App\Entity\User;
 use App\Form\ProjectType;
 use App\Repository\ProjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
@@ -18,7 +19,7 @@ final class ProjectController extends AbstractController
     public function index(ProjectRepository $projectRepository): Response
     {
         $user = $this->getUser();
-        if (!$user || !$user instanceof \App\Entity\User) {
+        if (!$user || !$user instanceof User) {
             return $this->redirectToRoute('app_login');
         }
 
@@ -51,7 +52,7 @@ final class ProjectController extends AbstractController
     public function new(Request $request, EntityManagerInterface $em): Response
     {
         $user = $this->getUser();
-        if (!$user || !$user instanceof \App\Entity\User) {
+        if (!$user || !$user instanceof User) {
             $this->addFlash('error', 'Vous devez être connecté pour créer un projet.');
             return $this->redirectToRoute('app_login');
         }
@@ -99,12 +100,12 @@ final class ProjectController extends AbstractController
     }
 
     #[Route('/schedule', name: 'app_schedule')]
-    public function schedule(\App\Repository\CardRepository $cardRepository, \App\Repository\ProjectRepository $projectRepository): Response
+    public function schedule(\App\Repository\CardRepository $cardRepository, ProjectRepository $projectRepository): Response
     {
         $user = $this->getUser();
         // Récupère toutes les cards accessibles (owner ou membership)
         $cards = [];
-        if ($user && $user instanceof \App\Entity\User) {
+        if ($user && $user instanceof User) {
             // Cards dont je suis créateur
             foreach ($cardRepository->findBy(['created_by' => $user]) as $c) {
                 $cards[$c->getId()] = $c;
@@ -114,10 +115,8 @@ final class ProjectController extends AbstractController
                 $project = $membership->getProject();
                 if ($project) {
                     foreach ($project->getBoards() as $board) {
-                        foreach ($board->getListes() as $liste) {
-                            foreach ($liste->getCards() as $c) {
-                                $cards[$c->getId()] = $c;
-                            }
+                        foreach ($board->getCards() as $c) {
+                            $cards[$c->getId()] = $c;
                         }
                     }
                 }
@@ -127,7 +126,7 @@ final class ProjectController extends AbstractController
 
         // Projets accessibles (owner ou membership)
         $projects = [];
-        if ($user && $user instanceof \App\Entity\User) {
+        if ($user && $user instanceof User) {
             // Owner
             foreach ($projectRepository->findBy(['created_by' => $user]) as $p) {
                 if (!$p->getArchivedAt()) {
@@ -148,8 +147,8 @@ final class ProjectController extends AbstractController
         foreach ($cards as $card) {
             // Affiche uniquement les cards planifiées par l'utilisateur connecté
             if ($card->getScheduledAt() && !$card->getArchivedAt() && $card->getScheduledBy() && $card->getScheduledBy()->getId() === $user->getId()) {
-                $color = $card->getListe() && $card->getListe()->getBoard() && $card->getListe()->getBoard()->getProject() && $card->getListe()->getBoard()->getProject()->getLabel()
-                    ? $card->getListe()->getBoard()->getProject()->getLabel()->getColor()
+                $color = $card->getLabel()->getColor()
+                    ? $card->getLabel()->getColor()
                     : '#3b82f6';
 
                 // Ajout des commentaires

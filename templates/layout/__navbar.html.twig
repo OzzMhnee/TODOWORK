@@ -11,12 +11,15 @@
         </button>
         <div class="hidden w-full md:block md:w-auto" id="navbar-default">
             <ul class="flex flex-col p-4 mt-4 border border-gray-100 rounded-lg bg-gray-50 md:flex-row md:space-x-8 md:mt-0 md:text-sm md:font-medium md:border-0 md:bg-white">
-                <li>
-                    <a href="{{ path('app_workspace_index') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Workspaces</a>
-                </li>
                 {% if app.user %}
+                    <li>
+                        <a href="{{ path('app_workspace_index') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Espaces de Travail</a>
+                    </li>
                     {% set has_workspace = false %}
-                    {% for ws in app.user.workspaces %}
+                    {% set has_projets = false %}
+                    {% set has_board = false %}
+                    {% set has_card = false %}
+                    {% for workspace in app.user.workspaces %}
                         {% set has_workspace = true %}
                     {% endfor %}
                     {% if not has_workspace %}
@@ -30,18 +33,45 @@
                         <li>
                             <a href="{{ path('app_project') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Projets</a>
                         </li>
+                        {% for membership in app.user.memberShips %}
+                            {% if membership.role == 'editor' and membership.project %}
+                                {% set has_projets = true %}
+                            {% endif %}
+                        {% endfor %}
+                        {% if not has_projets %}
+                            {% for workspace in app.user.workspaces %}
+                                {% for project in workspace.projects %}
+                                    {% set has_projets = true %}
+                                {% endfor %}
+                            {% endfor %}
+                        {% endif %}
+                        {% if has_projets %}
+                            <li>
+                                <a href="{{ path('app_board') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Etapes</a>
+                            </li>
+                            {% for membership in app.user.memberShips %}
+                                {% if membership.role == 'editor' and membership.project %}
+                                    {% for board in membership.project.boards %}
+                                        {% set has_board = true %}
+                                    {% endfor %}
+                                {% endif %}
+                            {% endfor %}
+                            {% if not has_board %}
+                                {% for workspace in app.user.workspaces %}
+                                    {% for project in workspace.projects %}
+                                        {% for board in project.boards %}
+                                            {% set has_board = true %}
+                                        {% endfor %}
+                                    {% endfor %}
+                                {% endfor %}
+                            {% endif %}
+                        {% endif %}
+                        {% if has_board %}
+                            <li>
+                                <a href="{{ path('app_card') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Tâches</a>
+                            </li>
+                        {% endif %}
                     {% endif %}
-                {% endif %}
-                <li>
-                    <a href="{{ path('app_board') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Boards</a>
-                </li>
-                <li>
-                    <a href="{{ path('app_liste') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Listes</a>
-                </li>
-                <li>
-                    <a href="{{ path('app_card') }}" class="block py-2 pl-3 pr-4 text-gray-700 rounded hover:bg-gray-100 md:hover:bg-transparent md:hover:text-blue-700">Cartes</a>
-                </li>
-                {% if app.user %}
                     {% if 'ROLE_ADMIN' in app.user.roles %}
                         <li class="relative" x-data="{ openAdmin: false }">
                             <button type="button"
@@ -57,8 +87,7 @@
                             <div
                                 x-show="openAdmin"
                                 @click.away="openAdmin = false"
-                                class="absolute right-0 z-20 mt-2 w-56 bg-white rounded shadow-lg border border-gray-200 py-2"
-                            >
+                                class="absolute right-0 z-20 mt-2 w-56 bg-white rounded shadow-lg border border-gray-200 py-2">
                                 <a href="{{ path('admin_users') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Gestion des Users</a>
                                 <div class="border-t my-1"></div>
                                 <a href="{{ path('app_label') }}" class="block px-4 py-2 text-gray-700 hover:bg-gray-100">Gestion des labels</a>

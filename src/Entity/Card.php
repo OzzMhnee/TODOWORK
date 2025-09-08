@@ -23,7 +23,7 @@ class Card
     private ?string $description = null;
 
     #[ORM\ManyToOne(inversedBy: 'cards')]
-    private ?Liste $liste = null;
+    private ?Board $board = null;
 
     #[ORM\Column]
     private ?int $position = 0;
@@ -67,6 +67,9 @@ class Card
     #[ORM\OneToMany(targetEntity: Checklist::class, mappedBy: 'card')]
     private Collection $checklists;
 
+    #[ORM\ManyToOne(inversedBy: 'cards')]
+    private ?Label $label = null;
+
     public function __construct()
     {
         $this->comments = new ArrayCollection();
@@ -103,14 +106,14 @@ class Card
         return $this;
     }
 
-    public function getListe(): ?Liste
+    public function getBoard(): ?Board
     {
-        return $this->liste;
+        return $this->board;
     }
 
-    public function setListe(?Liste $liste): static
+    public function setBoard(?Board $board): static
     {
-        $this->liste = $liste;
+        $this->board = $board;
 
         return $this;
     }
@@ -244,7 +247,6 @@ class Card
     public function removeChecklist(Checklist $checklist): static
     {
         if ($this->checklists->removeElement($checklist)) {
-            // set the owning side to null (unless already changed)
             if ($checklist->getCard() === $this) {
                 $checklist->setCard(null);
             }
@@ -295,6 +297,18 @@ class Card
     public function setScheduledBy(?User $user): static
     {
         $this->scheduled_by = $user;
+        return $this;
+    }
+
+    public function getLabel(): ?Label
+    {
+        return $this->label;
+    }
+
+    public function setLabel(?Label $label): static
+    {
+        $this->label = $label;
+
         return $this;
     }
 }

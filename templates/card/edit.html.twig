@@ -2,7 +2,7 @@
 
 {% block body %}
 <div class="max-w-lg mx-auto mt-10 bg-white p-8 rounded shadow">
-    <h1 class="text-2xl font-bold mb-6 text-purple-600">Modifier Carte</h1>
+    <h1 class="text-2xl font-bold mb-6 text-purple-600">Modifier la tâche</h1>
     {{ form_start(form) }}
         <div class="mb-4">
             {{ form_label(form.title) }}
@@ -25,11 +25,16 @@
             {{ form_errors(form.due_at) }}
         </div>
         <div class="mb-4">
-            {{ form_label(form.liste) }}
-            {{ form_widget(form.liste, {'attr': {'class': 'w-full px-3 py-2 border rounded'}}) }}
-            {{ form_errors(form.liste) }}
+            {{ form_label(form.label) }}
+            {{ form_widget(form.label, {'attr': {'class': 'w-full px-3 py-2 border rounded'}}) }}
+            {{ form_errors(form.label) }}
         </div>
-        <button class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700" type="submit">Enregistrer</button>
+        <div>
+            {{ form_label(form.board) }}
+            {{ form_widget(form.board, {'attr': {'class': 'w-full px-3 py-2 border rounded'}}) }}
+            {{ form_errors(form.board) }}
+        </div>
+        <button class="bg-purple-600 text-white font-bold py-2 px-4 rounded hover:bg-purple-700 mt-2" type="submit">Enregistrer les modifications</button>
         {{ form_rest(form) }}
     {{ form_end(form) }}
     <a href="{{ path('app_card') }}" class="text-purple-600 hover:underline block mt-4">Retour à la liste</a>

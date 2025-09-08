@@ -22,14 +22,14 @@ class Label
     private ?string $color = null;
 
     /**
-     * @var Collection<int, Project>
+     * @var Collection<int, Card>
      */
-    #[ORM\OneToMany(targetEntity: Project::class, mappedBy: 'label')]
-    private Collection $projects;
+    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'label')]
+    private Collection $cards;
 
     public function __construct()
     {
-        $this->projects = new ArrayCollection();
+        $this->cards = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -62,28 +62,28 @@ class Label
     }
 
     /**
-     * @return Collection<int, Project>
+     * @return Collection<int, Card>
      */
-    public function getProjects(): Collection
+    public function getCards(): Collection
     {
-        return $this->projects;
+        return $this->cards;
     }
 
-    public function addProject(Project $project): static
+    public function addCard(Card $card): static
     {
-        if (!$this->projects->contains($project)) {
-            $this->projects->add($project);
-            $project->setLabel($this);
+        if (!$this->cards->contains($card)) {
+            $this->cards->add($card);
+            $card->setLabel($this);
         }
 
         return $this;
     }
 
-    public function removeProject(Project $project): static
+    public function removeCard(Card $card): static
     {
-        if ($this->projects->removeElement($project)) {
-            if ($project->getLabel() === $this) {
-                $project->setLabel(null);
+        if ($this->cards->removeElement($card)) {
+            if ($card->getLabel() === $this) {
+                $card->setLabel(null);
             }
         }
 

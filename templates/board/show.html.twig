@@ -5,26 +5,17 @@
     <h1 class="text-2xl font-bold mb-6 text-blue-500">{{ board.name }}</h1>
     <p class="mb-2"><strong>Position :</strong> {{ board.position }}</p>
     <p class="mb-2"><strong>Projet :</strong> {{ board.project.name }}</p>
-    <a href="{{ path('app_board_edit', {'id': board.id}) }}" class="text-green-600 hover:underline mr-4">Modifier</a>
-    <a href="{{ path('app_board') }}" class="text-blue-600 hover:underline">Retour à la liste</a>
+    <a href="{{ path('app_board_edit', {'id': board.id}) }}" class="text-green-600 hover:underline mr-4">Modifier l'étape</a>
+    <a href="{{ path('app_board') }}" class="text-blue-600 hover:underline">Retour à la liste des étapes</a>
     <hr class="my-4">
-    <h2>Hiérarchie du board</h2>
+    <h2>Hiérarchie de l'étape</h2>
     <ul class="ml-4 mt-2">
-        {% for liste in board.listes %}
+        {% for card in board.cards %}
             <li>
-                <span class="font-semibold text-purple-600">Liste :</span> {{ liste.name }}
-                <ul class="ml-4">
-                    {% for card in liste.cards %}
-                        <li>
-                            <span class="font-semibold text-gray-700">Carte :</span> {{ card.title }}
-                        </li>
-                    {% else %}
-                        <li class="text-gray-400">Aucune carte</li>
-                    {% endfor %}
-                </ul>
+                <span class="font-semibold text-gray-700">Tâche :</span> {{ card.title }}
             </li>
         {% else %}
-            <li class="text-gray-400">Aucune liste</li>
+            <li class="text-gray-400">Aucune tâche disponible</li>
         {% endfor %}
     </ul>
 </div>

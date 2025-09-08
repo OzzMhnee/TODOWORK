@@ -3,8 +3,9 @@
 namespace App\Controller;
 
 use App\Entity\Card;
+use App\Entity\User;
 use App\Form\CardType;
-use App\Repository\CardRepository;
+use App\Repository\ProjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,10 +16,50 @@ use Symfony\Component\Routing\Attribute\Route;
 final class CardController extends AbstractController
 {
     #[Route('/', name: 'app_card', methods: ['GET'])]
-    public function index(CardRepository $cardRepository): Response
+    public function index(ProjectRepository $projectRepository): Response
     {
+        $user = $this->getUser();
+        if (!$user || !$user instanceof User) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        // Projets dont je suis owner (created_by)
+        $owned = $projectRepository->findBy(['created_by' => $user]);
+
+        // Projets où je suis membre (via MemberShip)
+        $memberProjects = [];
+        foreach ($user->getMemberShips() as $membership) {
+            $project = $membership->getProject();
+            if ($project) {
+                $memberProjects[$project->getId()] = $project;
+            }
+        }
+
+        // Fusionne et supprime les doublons
+        $projects = $owned;
+        foreach ($memberProjects as $p) {
+            if (!in_array($p, $projects, true)) {
+                $projects[] = $p;
+            }
+        }
+        $boards = [];
+        foreach ($projects as $p) {
+            foreach ($p->getBoards() as $b) {
+                $boards[$b->getId()] = $b;
+            }
+        }
+        $boards = array_values($boards);
+
+        $cards = [];
+        foreach ($boards as $b) {
+            foreach ($b->getCards() as $c) {
+                $cards[$c->getId()] = $c;
+            }
+        }
+        $cards = array_values($cards);
+
         return $this->render('card/index.html.twig', [
-            'cards' => $cardRepository->findAll(),
+            'cards' => $cards,
         ]);
     }
 
@@ -31,7 +72,7 @@ final class CardController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $user = $this->getUser();
-            if ($user && $user instanceof \App\Entity\User) {
+            if ($user && $user instanceof User) {
                 $card->setCreatedBy($user);
             }
             $em->persist($card);
@@ -63,7 +104,7 @@ final class CardController extends AbstractController
 
         if ($form->isSubmitted() && $form->isValid()) {
             $user = $this->getUser();
-            if (!$user || !$user instanceof \App\Entity\User) {
+            if (!$user || !$user instanceof User) {
                 $this->addFlash('error', 'Vous devez être connecté pour commenter.');
                 return $this->redirectToRoute('app_login');
             }
@@ -128,14 +169,14 @@ final class CardController extends AbstractController
     public function archive(Request $request, Card $card, EntityManagerInterface $em): Response
     {
         $user = $this->getUser();
-        $project = $card->getListe()?->getBoard()?->getProject();
+        $project = $card->getBoard()?->getProject();
 
         $isOwner = false;
-        if ($project && $project->getCreatedBy() && $user instanceof \App\Entity\User) {
+        if ($project && $project->getCreatedBy() && $user instanceof User) {
             $isOwner = $project->getCreatedBy()->getId() === $user->getId();
         }
         $isEditor = false;
-        if ($project && $user instanceof \App\Entity\User) {
+        if ($project && $user instanceof User) {
             foreach ($project->getMemberShips() as $membership) {
                 if ($membership->getPerson() && $membership->getPerson()->getId() === $user->getId() && $membership->getRole() === 'editor') {
                     $isEditor = true;
@@ -158,7 +199,7 @@ final class CardController extends AbstractController
         return $this->redirectToRoute('app_card');
     }
 
-    #[Route('/{id}', name: 'app_card_delete', methods: ['POST'])]
+    #[Route('/{id}/delete', name: 'app_card_delete', methods: ['POST'])]
     public function delete(Request $request, Card $card, EntityManagerInterface $em): Response
     {
         if ($this->isCsrfTokenValid('delete'.$card->getId(), $request->request->get('_token'))) {

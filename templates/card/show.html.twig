@@ -5,24 +5,26 @@
     {# --- Zone 1 : Informations de la carte --- #}
     <div class="bg-white p-8 rounded shadow">
         <h1 class="text-2xl font-bold mb-6 text-purple-600">{{ card.title }}</h1>
+        {% if card.label %}
+            <span class="inline-block w-4 h-4 rounded-full mr-2" style="background: {{ card.label.color }}"> </span>
+            <span>priorité : {{ card.label.name }}</span>
+        {% endif %}
         <p class="mb-2"><strong>Description :</strong> {{ card.description }}</p>
-        <p class="mb-2"><strong>Position :</strong> {{ card.position }}</p>
-        <p class="mb-2"><strong>Liste :</strong> {{ card.liste ? card.liste.name : 'Aucune' }}</p>
         <p class="mb-2"><strong>Échéance :</strong> {{ card.dueAt ? card.dueAt|date('d/m/Y H:i') : 'Aucune' }}</p>
         <p class="mb-2"><strong>Créée par :</strong> {{ card.createdBy ? card.createdBy.firstName ~ ' ' ~ card.createdBy.lastName : 'N/A' }}</p>
         <p class="mb-2"><strong>Archivée le :</strong> {{ card.archivedAt ? card.archivedAt|date('d/m/Y H:i') : 'Non archivée' }}</p>
         {% if card.scheduledAt and card.scheduledBy %}
             <div class="mb-2 p-2 bg-blue-50 border border-blue-200 rounded">
-                <strong>Planifiée par :</strong>
+                <strong>Actuellement affectée à :</strong>
                 {{ card.scheduledBy.firstName }} {{ card.scheduledBy.lastName }}
                 <br>
-                <strong>Début :</strong> {{ card.scheduledAt|date('d/m/Y H:i') }}
+                <strong>Début :</strong> {{ card.scheduledAt|date('d/m/Y') }}
                 {% if card.scheduledEndAt %}
-                    <br><strong>Fin :</strong> {{ card.scheduledEndAt|date('d/m/Y H:i') }}
+                    <br><strong>Fin :</strong> {{ card.scheduledEndAt|date('d/m/Y') }}
                 {% endif %}
             </div>
         {% endif %}
-        <a href="{{ path('app_card_edit', {'id': card.id}) }}" class="text-green-600 hover:underline mr-4">Modifier</a>
+        <a href="{{ path('app_card_edit', {'id': card.id}) }}" class="text-green-600 hover:underline mr-4">Modifier la tâche</a>
         <a href="{{ path('app_card') }}" class="text-purple-600 hover:underline">Retour à la liste</a>
         <hr class="my-4">
         <h3 class="font-bold mt-4 mb-2">Ajouter une checklist</h3>

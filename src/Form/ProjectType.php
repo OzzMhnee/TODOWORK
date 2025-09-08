@@ -25,10 +25,6 @@ class ProjectType extends AbstractType
                 'choice_label' => 'name',
                 'choices' => $user ? $this->getAvailableWorkspaces($user) : [],
             ])
-            ->add('label', EntityType::class, [
-                'class' => Label::class,
-                'choice_label' => 'name',
-            ])
         ;
     }
 

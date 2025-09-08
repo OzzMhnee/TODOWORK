@@ -22,10 +22,38 @@
                 <div x-show="open" class="px-3 py-2 text-sm text-gray-700 bg-white">
                     <div><strong>Rôles :</strong> {{ user.roles|join(', ') }}</div>
                     <div><strong>ID :</strong> {{ user.id }}</div>
-                    <div><strong>Workspaces :</strong> {{ user.workspaces|length }}</div>
-                    <div><strong>Projets :</strong> {{ user.projects|length }}</div>
-                    <div><strong>Cartes :</strong> {{ user.cards|length }}</div>
-                    <div><strong>Commentaires :</strong> {{ user.comments|length }}</div>
+                    {% if user.workspaces|length %}
+                        <div><strong>Espaces de travail accessibles :</strong> {{ user.workspaces|length }}</div>
+                        {% for workspace in user.workspaces %}
+                            <div class="ml-4">{{ workspace.name }}</div>
+                            {% if workspace.projects|length %}
+                                <div class="ml-4"><strong>Projets accessibles :</strong> {{ workspace.projects|length }}</div>
+                                {% for project in workspace.projects %}
+                                    <div class="ml-8">{{ project.name }}</div>
+                                    {% if project.boards|length %}
+                                        <div class="ml-8"><strong>Etapes accessibles :</strong> {{ project.boards|length }}</div>
+                                        {% for board in project.boards %}
+                                            <div class="ml-12">{{ board.name }}</div>
+                                            {% if board.cards|length %}
+                                                <div class="ml-12"><strong>Tâches accessibles :</strong> {{ board.cards|length }}</div>
+                                                {% for card in board.cards %}
+                                                    <div class="ml-16">{{ card.title }}</div>
+                                                {% endfor %}
+                                            {% else %}
+                                                <div class="ml-16 texta-gray-500 italic">Aucune tâche accessible</div>
+                                            {% endif %}
+                                        {% endfor %}
+                                    {% else %}
+                                        <div class="ml-12 texta-gray-500 italic">Aucune étape accessible</div>
+                                    {% endif %}
+                                {% endfor %}
+                            {% else %}
+                                <div class="ml-4 texta-gray-500 italic">Aucun projet accessible</div>
+                            {% endif %}
+                        {% endfor %}
+                    {% else %}
+                        <div><strong>Espaces de travail accessibles :</strong> 0</div>
+                    {% endif %}
                 </div>
             </div>
         {% else %}

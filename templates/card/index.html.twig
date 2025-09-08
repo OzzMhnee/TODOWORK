@@ -2,27 +2,38 @@
 
 {% block body %}
 <div class="max-w-3xl mx-auto mt-10 bg-white p-8 rounded shadow">
-    <h1 class="text-2xl font-bold mb-6 text-purple-600">Cartes</h1>
-    <a href="{{ path('app_card_new') }}" class="mb-4 inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Nouvelle carte</a>
+    <h1 class="text-2xl font-bold mb-6 text-purple-600">Tâches</h1>
+    <a href="{{ path('app_card_new') }}" class="mb-4 inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">Ajouter une nouvelle tâche</a>
     <ul>
         {% for card in cards %}
+            {% if card.label %}
+                <span class="inline-block w-4 h-4 rounded-full mr-2" style="background: {{ card.label.color }}"></span>
+                <span>Priorité : {{ card.label.name }}</span>
+            {% endif %}
             <li class="mb-2 p-4 border rounded flex justify-between items-center {% if card.archivedAt %}bg-gray-200 opacity-60{% endif %}">
                 <span>
                     <strong>{{ card.title }}</strong>
-                    <span class="text-gray-500 text-sm ml-2">Liste : {{ card.liste ? card.liste.name : 'Aucune' }}</span>
+                    <p class="text-gray-500 text-sm ml-2"> Projet : {{ card.board.project ? card.board.project.name : 'Aucun' }} </p>
+                    <p class="text-gray-500 text-sm ml-2"> Etape : {{ card.board ? card.board.name : 'Aucune' }}</p>
+                    {% if card.dueAt %}
+                        <span class="ml-2 text-sm text-red-600"> - Date limite : {{ card.dueAt|date('d/m/Y') }}</span>
+                    {% endif %}
+                    {% if card.scheduledBy %}
+                        <span class="ml-2 text-sm text-green-600"> - Assignée à : {{ card.scheduledBy.firstName }} {{ card.scheduledBy.lastName }} pour le {{ card.scheduledAt|date('d/m/Y') }} </span>
+                    {% endif %}
                     {% if card.archivedAt %}
-                        <span class="ml-2 text-xs text-gray-600 italic">Archivée le {{ card.archivedAt|date('d/m/Y H:i') }}</span>
+                        <span class="ml-2 text-xs text-gray-600 italic">Archivée le {{ card.archivedAt|date('d/m/Y') }}</span>
                     {% endif %}
                 </span>
                 <span>
-                    <a href="{{ path('app_card_show', {'id': card.id}) }}" class="text-blue-600 hover:underline mr-2">Voir</a>
+                    <a href="{{ path('app_card_show', {'id': card.id}) }}" class="text-blue-600 hover:underline mr-2">Fiche</a>
                     {% if not card.archivedAt %}
                         <a href="{{ path('app_card_edit', {'id': card.id}) }}" class="text-green-600 hover:underline mr-2">Modifier</a>
                         <form method="post" action="{{ path('app_card_delete', {'id': card.id}) }}" style="display:inline;" onsubmit="return confirm('Supprimer cette carte ?');">
                             <input type="hidden" name="_token" value="{{ csrf_token('delete' ~ card.id) }}">
                             <button class="text-red-600 hover:underline bg-transparent border-0 p-0" type="submit">Supprimer</button>
                         </form>
-                        {% set project = card.liste and card.liste.board and card.liste.board.project ? card.liste.board.project : null %}
+                        {% set project = card.board and card.board.project ? card.board.project : null %}
                         {% set is_owner = project and app.user and project.createdBy and project.createdBy.id == app.user.id %}
                         {% set is_editor = false %}
                         {% if project and app.user %}
@@ -44,7 +55,7 @@
                 </span>
             </li>
         {% else %}
-            <li>Aucune carte pour le moment.</li>
+            <li>Aucune tâche pour le moment.</li>
         {% endfor %}
     </ul>
 </div>

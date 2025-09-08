@@ -7,15 +7,16 @@
             <div class="bg-white rounded-2xl shadow-lg p-6 mb-8">
                 <h2 class="text-2xl font-extrabold text-blue-700 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-blue-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
-                    Emploi du temps
+                    Emploi du temps personnel
                 </h2>
                 <div id="calendar" class="rounded-lg overflow-hidden border border-blue-100 bg-blue-50"></div>
             </div>
             <div class="bg-white rounded-2xl shadow-lg p-6">
                 <h2 class="text-2xl font-extrabold text-purple-700 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M5 13l4 4L19 7"/></svg>
-                    Diagramme Eisenhower
+                    Diagramme d'Eisenhower - Projets de l'équipe au complet
                 </h2>
+                <h5><em>Ici vous pouvez voir l'ensemble des projets en cours par votre équipe, n'hésitez pas à les consulter en cas de trou sur votre planning pour proposer d'en récupérer un urgent !</em></h5>
                 <div id="eisenhower" class="grid grid-cols-2 grid-rows-2 gap-4 border-2 border-gray-200 rounded-xl p-4 bg-gray-50 min-h-[400px]">
                     {% set quadrants = {
                         'urgent-important': 'Urgent & Important',
@@ -36,7 +37,7 @@
                             {# Cards à afficher dans ce quadrant #}
                             {% for card in cards %}
                                 {# Récupère le projet parent #}
-                                {% set project = card.liste and card.liste.board and card.liste.board.project ? card.liste.board.project : null %}
+                                {% set project = card.board and card.board.project ? card.board.project : null %}
                                 {# Vérifie owner ou membership #}
                                 {% set is_owner = project and app.user and project.createdBy and project.createdBy.id == app.user.id %}
                                 {% set is_member = false %}
@@ -47,17 +48,17 @@
                                         {% endif %}
                                     {% endfor %}
                                 {% endif %}
-                                {# Vérifie non archivée #}
+                                {# Vérifie si non archivée #}
                                 {% if (is_owner or is_member) and not card.archivedAt %}
-                                    {% set card_label = project and project.label ? project.label.name|lower : '' %}
+                                    {% set card_label = card.label ? card.label.name|lower : '' %}
                                     {% if (key == 'urgent-important' and card_label == 'urgent & important')
                                         or (key == 'not-urgent-important' and card_label == 'non urgent & important')
                                         or (key == 'urgent-not-important' and card_label == 'urgent & pas important')
                                         or (key == 'not-urgent-not-important' and card_label == 'non urgent & pas important') %}
                                         <li class="draggable mb-2 p-2 rounded shadow cursor-move border"
-                                            style="background: {{ project and project.label ? project.label.color : '#e0e7ff' }};"
+                                            style="background: {{ card.label ? card.label.color : '#e0e7ff' }};"
                                             data-card-id="{{ card.id }}"
-                                            data-card-color="{{ project and project.label ? project.label.color : '#3b82f6' }}"
+                                            data-card-color="{{ card.label ? card.label.color : '#3b82f6' }}"
                                             data-card-description="{{ card.description|e('html_attr') }}">
                                             <span class="font-semibold text-white">{{ card.title }}</span>
                                         </li>
@@ -73,7 +74,7 @@
             <div class="bg-white rounded-2xl shadow-lg p-6 sticky top-8">
                 <h2 class="text-2xl font-extrabold text-gray-700 mb-4 flex items-center gap-2">
                     <svg class="w-6 h-6 text-gray-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><path d="M9 9h6v6H9z"/></svg>
-                    À placer
+                    Tâches à placer
                 </h2>
                 <ul id="todo-list" class="space-y-3">
                     {% set hasCard = false %}
@@ -81,16 +82,16 @@
                         {% if not card.scheduledAt %}
                             {% set hasCard = true %}
                             <li class="draggable p-3 rounded-lg shadow flex items-center gap-2 cursor-move border hover:shadow-lg transition"
-                                style="background: {{ card.liste and card.liste.board and card.liste.board.project and card.liste.board.project.label ? card.liste.board.project.label.color : '#3b82f6' }};"
+                                style="background: {{ card.label ? card.label.color : '#3b82f6' }};"
                                 data-card-id="{{ card.id }}"
-                                data-card-color="{{ card.liste and card.liste.board and card.liste.board.project and card.liste.board.project.label ? card.liste.board.project.label.color : '#3b82f6' }}"
+                                data-card-color="{{ card.label ? card.label.color : '#3b82f6' }}"
                                 data-card-description="{{ card.description|e('html_attr') }}">
                                 <span class="font-semibold text-white">{{ card.title }}</span>
                             </li>
                         {% endif %}
                     {% endfor %}
                     {% if not hasCard %}
-                        <li class="text-gray-400 text-center">Aucune carte à placer</li>
+                        <li class="text-gray-400 text-center">Aucune tâche à placer</li>
                     {% endif %}
             </div>
         </div>
@@ -120,7 +121,7 @@ function formatFrenchPeriod(start, end) {
 }
 
 document.addEventListener('DOMContentLoaded', function() {
-    // 1. Rendez la liste "À placer" draggables pour FullCalendar
+    // Rendre la liste "À placer" draggables pour FullCalendar
     new FullCalendar.Draggable(document.getElementById('todo-list'), {
         itemSelector: '.draggable',
         eventData: function(eventEl) {
@@ -135,7 +136,7 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     });
 
-    // 1bis. Rendez la liste "À placer" droppable pour les events du calendrier
+    // Rendre la liste "À placer" droppable pour les events du calendrier
     const todoList = document.getElementById('todo-list');
     todoList.addEventListener('dragover', function(e) {
         e.preventDefault();

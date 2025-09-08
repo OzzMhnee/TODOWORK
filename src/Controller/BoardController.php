@@ -3,8 +3,10 @@
 namespace App\Controller;
 
 use App\Entity\Board;
+use App\Entity\User;
 use App\Form\BoardType;
 use App\Repository\BoardRepository;
+use App\Repository\ProjectRepository;
 use Doctrine\ORM\EntityManagerInterface;
 use Symfony\Bundle\FrameworkBundle\Controller\AbstractController;
 use Symfony\Component\HttpFoundation\Request;
@@ -15,10 +17,42 @@ use Symfony\Component\Routing\Attribute\Route;
 final class BoardController extends AbstractController
 {
     #[Route('/', name: 'app_board', methods: ['GET'])]
-    public function index(BoardRepository $boardRepository): Response
+    public function index(ProjectRepository $projectRepository): Response
     {
+        $user = $this->getUser();
+        if (!$user || !$user instanceof User) {
+            return $this->redirectToRoute('app_login');
+        }
+
+        // Projets dont je suis owner (created_by)
+        $owned = $projectRepository->findBy(['created_by' => $user]);
+
+        // Projets où je suis membre (via MemberShip)
+        $memberProjects = [];
+        foreach ($user->getMemberShips() as $membership) {
+            $project = $membership->getProject();
+            if ($project) {
+                $memberProjects[$project->getId()] = $project;
+            }
+        }
+
+        // Fusionne et supprime les doublons
+        $projects = $owned;
+        foreach ($memberProjects as $p) {
+            if (!in_array($p, $projects, true)) {
+                $projects[] = $p;
+            }
+        }
+        $boards = [];
+        foreach ($projects as $p) {
+            foreach ($p->getBoards() as $b) {
+                $boards[$b->getId()] = $b;
+            }
+        }
+        $boards = array_values($boards);
+
         return $this->render('board/index.html.twig', [
-            'boards' => $boardRepository->findAll(),
+            'boards' => $boards,
         ]);
     }
 

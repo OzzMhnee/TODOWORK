@@ -26,14 +26,14 @@ class Board
     private ?int $position = null;
 
     /**
-     * @var Collection<int, Liste>
+     * @var Collection<int, Card>
      */
-    #[ORM\OneToMany(targetEntity: Liste::class, mappedBy: 'board')]
-    private Collection $listes;
+    #[ORM\OneToMany(targetEntity: Card::class, mappedBy: 'board')]
+    private Collection $cards;
 
     public function __construct()
     {
-        $this->listes = new ArrayCollection();
+        $this->cards = new ArrayCollection();
     }
 
     public function getId(): ?int
@@ -78,32 +78,30 @@ class Board
     }
 
     /**
-     * @return Collection<int, Liste>
+     * @return Collection<int, Card>
      */
-    public function getListes(): Collection
+    public function getCards(): Collection
     {
-        return $this->listes;
+        return $this->cards;
     }
 
-    public function addListe(Liste $liste): static
+    public function addCard(Card $card): static
     {
-        if (!$this->listes->contains($liste)) {
-            $this->listes->add($liste);
-            $liste->setBoard($this);
+        if (!$this->cards->contains($card)) {
+            $this->cards->add($card);
+            $card->setBoard($this);
         }
-
         return $this;
     }
 
-    public function removeListe(Liste $liste): static
+    public function removeCard(Card $card): static
     {
-        if ($this->listes->removeElement($liste)) {
+        if ($this->cards->removeElement($card)) {
             // set the owning side to null (unless already changed)
-            if ($liste->getBoard() === $this) {
-                $liste->setBoard(null);
+            if ($card->getBoard() === $this) {
+                $card->setBoard(null);
             }
         }
-
         return $this;
     }
 }

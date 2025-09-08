@@ -37,9 +37,6 @@ class Project
     #[ORM\OneToMany(targetEntity: Board::class, mappedBy: 'project')]
     private Collection $boards;
 
-    #[ORM\ManyToOne(inversedBy: 'projects')]
-    private ?Label $label = null;
-
     /**
      * @var Collection<int, MemberShip>
      */
@@ -131,18 +128,6 @@ class Project
                 $board->setProject(null);
             }
         }
-
-        return $this;
-    }
-
-    public function getLabel(): ?Label
-    {
-        return $this->label;
-    }
-
-    public function setLabel(?Label $label): static
-    {
-        $this->label = $label;
 
         return $this;
     }
