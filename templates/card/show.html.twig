@@ -60,7 +60,7 @@
         {{ form_end(commentForm) }}
     </div>
 </div>
-<div class="max-w-3xl mx-auto mt-10 space-y-8">
+<div class="max-w-3xl mx-auto mt-10 space-y-8" data-controller="drag-drop-checklist" data-drag-drop-checklist-csrf-token-value="{{ csrf_token('reorder_checklists') }}">
     {# --- Zone 3 : Checklists (une zone par checklist) --- #}
     <ul id="checklists-sortable" class="space-y-6" data-card-id="{{ card.id }}">
         {% for checklist in card.checklists|sort((a, b) => a.position <=> b.position) %}
@@ -74,14 +74,8 @@
                         </svg>
                     </span>
                 </div>
-
                 <ul class="ml-4" data-checklist-id="{{ checklist.id }}">
                     {% for item in checklist.checklistItems|sort((a, b) => a.position <=> b.position) %}
-                        <script>
-                            console.log(
-                                "ChecklistItem id={{ item.id }} | isDone={{ item.isDone ? 'true' : 'false' }} | getIsDone={{ item.getIsDone ? 'true' : 'false' }}"
-                            );
-                        </script>
                         <li data-item-id="{{ item.id }}" class="flex items-center gap-2 mb-1">
                             <form method="post" action="{{ path('app_checklist_item_toggle', {'id': item.id}) }}" style="display:inline;">
                                 <input type="hidden" name="_token" value="{{ csrf_token('toggle_checklist_item_' ~ item.id) }}">
@@ -124,6 +118,5 @@
 
 
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.0/Sortable.min.js"></script>
-{% block custom_scripts %}{% endblock %}
 {% endblock %}
 
